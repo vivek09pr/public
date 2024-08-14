@@ -7,11 +7,11 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 const port = process.env.PORT || 9000; // Update here
-app.use(express.static('public'));
-// Handle the root route
+app.use(express.static(__dirname)); // Serve static files from the root directory
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(__dirname + '/index.html'); // Adjust path to index.html
 });
+
 
 const chatRooms = {};
 
@@ -70,3 +70,4 @@ io.on('connection', (socket) => {
 server.listen(port, () => { // Use the port variable here
     console.log(`listening on *:${port}`);
 });
+                
