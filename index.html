@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Chat Interface</title>
+    <link rel="stylesheet" href="https://unpkg.com/emoji-picker-element@^1.0.0/dist/emoji-picker.css">
+    <style>
+        /* General Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        /* Container for Input Sections */
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* Username Input Styles */
+        .username-input, .code-input {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Input Field Styles */
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        /* Button Styles */
+        button  {
+            background-color: #4b6cb7;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        } 
+        
+        button:hover {
+            background-color: #365f8b; /* Darker shade on hover */
+        }
+
+        /* Chat Container */
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 0.75rem;
+            border-radius: 10px;
+            max-width: 75%;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message .username {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .message.sent {
+            background-color: #4b6cb7;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message.received {
+            background-color: #d1d1d1;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .input-area {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid #ddd;
+            gap: 0.5rem;
+        }
+
+        .input-area input {
+            border: none;
+            padding: 0.75rem 1rem;
+            flex-grow: 1;
+            border-radius: 25px;
+        }
+
+        .emoji-button {
+            background-color: #f0f0f0;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: background-color 0.3s;
+        }
+
+        .emoji-button:hover {
+            background-color: #d1d1d1; /* Lighter shade on hover */
+        }
+
+        .input-area button {
+            background-color: #4b6cb7;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Hide emoji picker initially */
+        emoji-picker {
+            display: none;
+            position: absolute;
+            bottom: 60px; /* Position it above the input area */
+            right: 10px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="username-container" class="username-input">
+        <h1>Enter Your Name</h1>
+        <input type="text" id="username" placeholder="Your Name" required>
+        <button id="start-chat">Start Chatting</button>
+    </div>
+
+    <div id="code-container" class="code-input" style="display: none;">
+        <h2>Room Code: <span id="generated-code"></span></h2>
+        <button id="generate-code">Generate Code</button>
+        <input type="text" id="join-code" placeholder="Enter code to join">
+        <button id="join-chat">Join Chat</button>
+    </div>
+
+    <div id="chat-container" class="chat-container" style="display: none;">
+        <div class="header">
+            <div class="contact-name"></div>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="input-area">
+            <button id="emoji-button" class="emoji-button">&#x1F600;</button>
+            <input id="input" autocomplete="off" placeholder="Type a message..." maxlength="500" />
+            <input type="file" id="image-input" accept="image/*" style="display: none;" /> <!-- Hidden file input -->
+            <button id="image-button">&#x1F4F7;</button> <!-- Camera icon button -->
+            <button id="send-button">Send</button>
+            <emoji-picker></emoji-picker>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <script>
+        const socket = io();
+        let username, roomCode, clientId;
+
+        // Handling name input and chat start
+        document.getElementById('start-chat').addEventListener('click', () => {
+            username = document.getElementById('username').value.trim();
+            if (username) {
+                document.getElementById('username-container').style.display = 'none';
+                document.getElementById('code-container').style.display = 'block';
+            }
+        });
+
+        // Generate Room Code
+        document.getElementById('generate-code').addEventListener('click', () => {
+            roomCode = Math.random().toString(36).substr(2, 8); // Generate random 8-char code
+            document.getElementById('generated-code').textContent = roomCode;
+            socket.emit('create room', roomCode);
+            switchToChat();
+        });
+
+        // Join Existing Chat Room
+        document.getElementById('join-chat').addEventListener('click', () => {
+            roomCode = document.getElementById('join-code').value.trim();
+            if (roomCode) {
+                socket.emit('join room', roomCode, username);
+            }
+        });
+
+        // Switch to Chat Window
+        function switchToChat() {
+            document.getElementById('code-container').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'flex';
+            document.querySelector('.header .contact-name').textContent = `Chat Room: ${roomCode}`;
+            clientId = socket.id;
+        }
+
+        // Handle Incoming Chat Messages
+        const messages = document.getElementById('messages');
+
+        socket.on('joined room', (code) => {
+            roomCode = code;
+            switchToChat();
+        });
+
+        socket.on('chat message', (data) => {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(data.senderId === clientId ? 'sent' : 'received');
+            messageElement.innerHTML = `<div class="username">${data.username}</div><p>${data.message}</p><small>${data.timestamp}</small>`;
+            messages.appendChild(messageElement);
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        socket.on('image message', (data) => {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(data.senderId === clientId ? 'sent' : 'received');
+            messageElement.innerHTML = `<div class="username">${data.username}</div><img src="${data.image}" style="max-width: 100%; border-radius: 10px;"><small>${data.timestamp}</small>`;
+            messages.appendChild(messageElement);
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        // Send Message
+        document.getElementById('send-button').addEventListener('click', () => {
+            const messageInput = document.getElementById('input');
+            const message = messageInput.value.trim();
+            if (message) {
+                const messageData = {
+                    username: username,
+                    message: message,
+                    timestamp: new Date().toLocaleTimeString(),
+                    roomCode: roomCode,
+                    senderId: clientId
+                };
+                socket.emit('chat message', messageData);
+                messageInput.value = '';
+            }
+        });
+
+        // Handle Image Upload
+        document.getElementById('image-button').addEventListener('click', () => {
+            document.getElementById('image-input').click();
+        });
+
+        document.getElementById('image-input').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const imageData = {
+                        username: username,
+                        image: reader.result,
+                        timestamp: new Date().toLocaleTimeString(),
+                        roomCode: roomCode,
+                        senderId: clientId
+                    };
+                    socket.emit('image message', imageData);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Emoji Picker
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.querySelector('emoji-picker');
+
+        emojiButton.addEventListener('click', () => {
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+        });
+
+        emojiPicker.addEventListener('emoji-click', (event) => {
+            const input = document.getElementById('input');
+            input.value += event.detail.unicode;
+            emojiPicker.style.display = 'none'; // Hide picker after selection
+        });
+
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!emojiPicker.contains(event.target) && event.target !== emojiButton) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
