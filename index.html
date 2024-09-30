@@ -329,138 +329,300 @@ emoji-picker {
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <script>
-      
-      const socket = io();
-let username, roomCode, clientId;
+
+const socket = io(); // Initialize a Socket.IO connection
+let username, roomCode, clientId; // Declare variables for username, room code, and client ID
 
 // Handling name input and chat start
 document.getElementById('start-chat').addEventListener('click', () => {
-    username = document.getElementById('username').value.trim();
-    if (username) {
-        document.getElementById('username-container').style.display = 'none';
-        document.getElementById('code-container').style.display = 'block';
+    username = document.getElementById('username').value.trim(); // Get and trim the username input
+    if (username) { // If the username is not empty
+        document.getElementById('username-container').style.display = 'none'; // Hide username input section
+        document.getElementById('code-container').style.display = 'block'; // Show room code input section
     }
 });
 
 // Generate Room Code
 document.getElementById('generate-code').addEventListener('click', () => {
-    roomCode = Math.random().toString(36).substr(2, 8);
+    roomCode = Math.random().toString(36).substr(2, 8); // Generate a random room code
     console.log('Generated Room Code:', roomCode);
-    socket.emit('create room', roomCode);
+    socket.emit('create room', roomCode); // Emit the room code to the server to create a room
     // Optionally delay switching to chat
     // 2-second delay
 });
 
 // Join Existing Chat Room
 document.getElementById('join-chat').addEventListener('click', () => {
-    roomCode = document.getElementById('join-code').value.trim();
-    if (roomCode) {
-        socket.emit('join room', roomCode, username);
+    roomCode = document.getElementById('join-code').value.trim(); // Get and trim the room code input
+    if (roomCode) { // If the room code is not empty
+        socket.emit('join room', roomCode, username); // Emit an event to join the room with the room code and username
     }
 });
 
 // Switch to Chat Window
 function switchToChat() {
-    document.getElementById('code-container').style.display = 'none';
-    document.getElementById('chat-container').style.display = 'flex';
-    document.querySelector('.header .contact-name').textContent = `Chat Room: ${roomCode}`;
-    clientId = socket.id;
+    document.getElementById('code-container').style.display = 'none'; // Hide room code input section
+    document.getElementById('chat-container').style.display = 'flex'; // Show the chat window
+    document.querySelector('.header .contact-name').textContent = `Chat Room: ${roomCode}`; // Display the room code in the header
+    clientId = socket.id; // Store the client's socket ID
 }
 
 // Handle Incoming Chat Messages
-const messages = document.getElementById('messages');
+const messages = document.getElementById('messages'); // Reference to the message container
 
+// When a user joins the room
 socket.on('joined room', (code) => {
-    roomCode = code;
-    switchToChat();
+    roomCode = code; // Set the current room code
+    switchToChat(); // Switch to the chat window
 });
 
+// Receive and display chat messages
 socket.on('chat message', (data) => {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message');
-    messageElement.classList.add(data.senderId === clientId ? 'sent' : 'received');
-    messageElement.innerHTML = `<div class="username">${data.username}</div><p>${data.message}</p><small>${data.timestamp}</small>`;
-    messages.appendChild(messageElement);
-    messages.scrollTop = messages.scrollHeight;
+    const messageElement = document.createElement('div'); // Create a new message div
+    messageElement.classList.add('message', data.senderId === clientId ? 'sent' : 'received'); // Add 'sent' or 'received' class based on sender
+    messageElement.innerHTML = `<div class="username">${data.username}</div><p>${data.message}</p><small>${data.timestamp}</small>`; // Set message content
+    messages.appendChild(messageElement); // Append the message to the chat window
+    messages.scrollTop = messages.scrollHeight; // Scroll to the bottom of the chat
 });
 
+// Handle incoming image messages
 socket.on('image message', (data) => {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message');
-    messageElement.classList.add(data.senderId === clientId ? 'sent' : 'received');
-    messageElement.innerHTML = `<div class="username">${data.username}</div><img src="${data.image}" style="max-width: 100%; border-radius: 10px;"><small>${data.timestamp}</small>`;
-    messages.appendChild(messageElement);
-    messages.scrollTop = messages.scrollHeight;
+    const messageElement = document.createElement('div'); // Create a new message div
+    messageElement.classList.add('message', data.senderId === clientId ? 'sent' : 'received'); // Add 'sent' or 'received' class
+    messageElement.innerHTML = `<div class="username">${data.username}</div><img src="${data.image}" style="max-width: 100%; border-radius: 10px;"><small>${data.timestamp}</small>`; // Display image in chat
+    messages.appendChild(messageElement); // Append the image message to the chat
+    messages.scrollTop = messages.scrollHeight; // Scroll to the bottom of the chat
 });
 
+// Leave chat and display 'Chat has ended' message
 document.getElementById('leave-button').addEventListener('click', () => {
-    document.getElementById('chat-container').style.display = 'none';
-    const endMessage = document.createElement('div');
+    document.getElementById('chat-container').style.display = 'none'; // Hide the chat container
+    const endMessage = document.createElement('div'); // Create a div for the 'Chat has ended' message
     endMessage.classList.add('end-message');
-    endMessage.textContent = 'Chat has ended';
-    document.body.appendChild(endMessage);
+    endMessage.textContent = 'Chat has ended'; // Set message content
+    document.body.appendChild(endMessage); // Append the end message to the body
 });
 
-// Send Message
+// Send message handler
 document.getElementById('send-button').addEventListener('click', () => {
-    const messageInput = document.getElementById('input');
-    const message = messageInput.value.trim();
-    if (message) {
-        const messageData = {
+    const messageInput = document.getElementById('input'); // Get the message input
+    const message = messageInput.value.trim(); // Trim the message
+    if (message) { // If the message is not empty
+        const messageData = { // Create a message data object
             username: username,
             message: message,
             timestamp: new Date().toLocaleTimeString(),
             roomCode: roomCode,
             senderId: clientId
         };
-        socket.emit('chat message', messageData);
-        messageInput.value = '';
+        socket.emit('chat message', messageData); // Emit the message to the server
+        messageInput.value = ''; // Clear the input field
     }
 });
 
-// Handle Image Upload
+// Handle Image Upload and send image to the chat
 document.getElementById('image-button').addEventListener('click', () => {
-    document.getElementById('image-input').click();
+    document.getElementById('image-input').click(); // Trigger file input when the image button is clicked
 });
 
 document.getElementById('image-input').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
+    const file = event.target.files[0]; // Get the selected file
+    if (file) { // If a file is selected
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = () => { // Read the file and send the image to the server
             const imageData = {
                 username: username,
                 image: reader.result,
                 timestamp: new Date().toLocaleTimeString(),
                 roomCode: roomCode,
                 senderId: clientId
-            };          
-            socket.emit('image message', imageData);
+            };
+            socket.emit('image message', imageData); // Emit the image to the server
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(file); // Convert image to Base64
     }
 });
 
-// Emoji Picker
+// Emoji Picker setup
 const emojiButton = document.getElementById('emoji-button');
 const emojiPicker = document.querySelector('emoji-picker');
 
-emojiButton.addEventListener('click', () => {
-    emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+// Toggle the emoji picker when clicking on the emoji button
+emojiButton.addEventListener('click', (event) => {
+    event.stopPropagation(); // Prevent the document click event from closing the picker
+    emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none'; // Toggle emoji picker display
 });
 
+// Handle emoji selection and append it to the input field
 emojiPicker.addEventListener('emoji-click', (event) => {
-    const input = document.getElementById('input');
-    input.value += event.detail.unicode;
-    emojiPicker.style.display = 'none'; // Hide picker after selection
+    const input = document.getElementById('input'); // Get the message input field
+    input.value += event.detail.unicode; // Append the selected emoji to the input
 });
 
-// Close emoji picker when clicking outside                                                                 
-document.addEventListener('click', (event) => {
-    if (!emojiPicker.contains(event.target) && event.target !== emojiButton) {
-        emojiPicker.style.display = 'none';
+// Send message when pressing the Enter key
+document.getElementById('input').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent default behavior of Enter key
+        sendMessage(); // Send the message
+        emojiPicker.style.display = 'none'; // Hide the emoji picker after sending
     }
 });
+
+// Function to send a message
+function sendMessage() {
+    const messageInput = document.getElementById('input'); // Get the message input
+    const message = messageInput.value.trim(); // Trim the message input
+    if (message) { // If the message is not empty
+        const messageData = { // Create a message object
+            username: username,
+            message: message,
+            timestamp: new Date().toLocaleTimeString(),
+            roomCode: roomCode,
+            senderId: clientId
+        };
+        socket.emit('chat message', messageData); // Emit the message to the server
+        messageInput.value = ''; // Clear the input field
+    }
+}
+
+// Close the emoji picker when clicking outside of it
+document.addEventListener('click', (event) => {
+    if (!emojiPicker.contains(event.target) && event.target !== emojiButton) { // Check if the click is outside the emoji picker
+        emojiPicker.style.display = 'none'; // Hide the emoji picker
+    }
+});
+
+//       const socket = io();
+// let username, roomCode, clientId;
+
+// // Handling name input and chat start
+// document.getElementById('start-chat').addEventListener('click', () => {
+//     username = document.getElementById('username').value.trim();
+//     if (username) {
+//         document.getElementById('username-container').style.display = 'none';
+//         document.getElementById('code-container').style.display = 'block';
+//     }
+// });
+
+// // Generate Room Code
+// document.getElementById('generate-code').addEventListener('click', () => {
+//     roomCode = Math.random().toString(36).substr(2, 8);
+//     console.log('Generated Room Code:', roomCode);
+//     socket.emit('create room', roomCode);
+//     // Optionally delay switching to chat
+//     // 2-second delay
+// });
+
+// // Join Existing Chat Room
+// document.getElementById('join-chat').addEventListener('click', () => {
+//     roomCode = document.getElementById('join-code').value.trim();
+//     if (roomCode) {
+//         socket.emit('join room', roomCode, username);
+//     }
+// });
+
+// // Switch to Chat Window
+// function switchToChat() {
+//     document.getElementById('code-container').style.display = 'none';
+//     document.getElementById('chat-container').style.display = 'flex';
+//     document.querySelector('.header .contact-name').textContent = `Chat Room: ${roomCode}`;
+//     clientId = socket.id;
+// }
+
+// // Handle Incoming Chat Messages
+// const messages = document.getElementById('messages');
+
+// socket.on('joined room', (code) => {
+//     roomCode = code;
+//     switchToChat();
+// });
+
+// socket.on('chat message', (data) => {
+//     const messageElement = document.createElement('div');
+//     messageElement.classList.add('message');
+//     messageElement.classList.add(data.senderId === clientId ? 'sent' : 'received');
+//     messageElement.innerHTML = `<div class="username">${data.username}</div><p>${data.message}</p><small>${data.timestamp}</small>`;
+//     messages.appendChild(messageElement);
+//     messages.scrollTop = messages.scrollHeight;
+// });
+
+// socket.on('image message', (data) => {
+//     const messageElement = document.createElement('div');
+//     messageElement.classList.add('message');
+//     messageElement.classList.add(data.senderId === clientId ? 'sent' : 'received');
+//     messageElement.innerHTML = `<div class="username">${data.username}</div><img src="${data.image}" style="max-width: 100%; border-radius: 10px;"><small>${data.timestamp}</small>`;
+//     messages.appendChild(messageElement);
+//     messages.scrollTop = messages.scrollHeight;
+// });
+
+// document.getElementById('leave-button').addEventListener('click', () => {
+//     document.getElementById('chat-container').style.display = 'none';
+//     const endMessage = document.createElement('div');
+//     endMessage.classList.add('end-message');
+//     endMessage.textContent = 'Chat has ended';
+//     document.body.appendChild(endMessage);
+// });
+
+// // Send Message
+// document.getElementById('send-button').addEventListener('click', () => {
+//     const messageInput = document.getElementById('input');
+//     const message = messageInput.value.trim();
+//     if (message) {
+//         const messageData = {
+//             username: username,
+//             message: message,
+//             timestamp: new Date().toLocaleTimeString(),
+//             roomCode: roomCode,
+//             senderId: clientId
+//         };
+//         socket.emit('chat message', messageData);
+//         messageInput.value = '';
+//     }
+// });
+
+// // Handle Image Upload
+// document.getElementById('image-button').addEventListener('click', () => {
+//     document.getElementById('image-input').click();
+// });
+
+// document.getElementById('image-input').addEventListener('change', (event) => {
+//     const file = event.target.files[0];
+//     if (file) {
+//         const reader = new FileReader();
+//         reader.onload = () => {
+//             const imageData = {
+//                 username: username,
+//                 image: reader.result,
+//                 timestamp: new Date().toLocaleTimeString(),
+//                 roomCode: roomCode,
+//                 senderId: clientId
+//             };          
+//             socket.emit('image message', imageData);
+//         };
+//         reader.readAsDataURL(file);
+//     }
+// });
+
+// // Emoji Picker
+// const emojiButton = document.getElementById('emoji-button');
+// const emojiPicker = document.querySelector('emoji-picker');
+
+// emojiButton.addEventListener('click', () => {
+//     emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+// });
+
+// emojiPicker.addEventListener('emoji-click', (event) => {
+//     const input = document.getElementById('input');
+//     input.value += event.detail.unicode;
+//     emojiPicker.style.display = 'none'; // Hide picker after selection
+// });
+
+// // Close emoji picker when clicking outside                                                                 
+// document.addEventListener('click', (event) => {
+//     if (!emojiPicker.contains(event.target) && event.target !== emojiButton) {
+//         emojiPicker.style.display = 'none';
+//     }
+// });
 
     </script>
 </body>
