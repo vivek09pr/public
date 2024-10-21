@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/emoji-picker-element@^1.0.0/dist/emoji-picker.css">
     <style>
         /* General Reset */
-        * {
+          * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -357,7 +357,6 @@
             font-size: 24px;
             color: white;
             font-weight: bold;
-            padding-bottom: 6px;
         }
 
         .plus-icon.clicked {
@@ -456,13 +455,13 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
             .username-input, .code-input {
                 padding: 1rem;
             }
 
             .input-area {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
                 gap: 0.5rem;
             }
 
@@ -472,6 +471,8 @@
 
             .input-area input {
                 padding-left: 2.5rem;
+                flex-grow: 1;
+                width: auto;
             }
 
             .plus-icon {
@@ -488,6 +489,7 @@
             .chat-container {
                 height: 100%;
                 border-radius: 0;
+                width: 100vw;
             }
 
             .message {
@@ -502,28 +504,17 @@
             h1#room {
                 font-size: 1.3rem;
             }
-        }
 
-        @media (min-width: 481px) and (max-width: 768px) {
-            .username-input, .code-input {
-                padding: 1.5rem;
+            .messages {
+                height: calc(100vh - 120px);
             }
 
-            .header {
-                font-size: 1.5rem;
-                padding: 1rem;
-            }
-
-            h1#room {
-                font-size: 1.6rem;
-            }
-
-            .chat-container {
-                width: 90vw;
-            }
-
-            .message {
-                max-width: 80%;
+            .input-area {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: var(--bg-color);
             }
         }
 
