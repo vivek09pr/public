@@ -675,12 +675,21 @@
         });
 
         socket.on('user left', (data) => {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', 'system-message');
-            messageElement.innerHTML = `<em>${data.username} has left the chat</em>`;
-            messages.appendChild(messageElement);
-            messages.scrollTop = messages.scrollHeight;
-        });
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', 'system-message');
+    messageElement.innerHTML = `<em>${data.username} has left the chat</em>`;
+    document.getElementById('messages').appendChild(messageElement);
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+});
+
+
+        // socket.on('user left', (data) => {
+        //     const messageElement = document.createElement('div');
+        //     messageElement.classList.add('message', 'system-message');
+        //     messageElement.innerHTML = `<em>${data.username} has left the chat</em>`;
+        //     messages.appendChild(messageElement);
+        //     messages.scrollTop = messages.scrollHeight;
+        // });
 
         // Send Message
         function sendMessage() {
