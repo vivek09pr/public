@@ -11,6 +11,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-font-smoothing: antialiased;
         }
 
         :root {
@@ -182,7 +183,7 @@
         }
 
         .header {
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+/*             background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 1rem;
             display: flex;
@@ -190,7 +191,20 @@
             justify-content: center;
             font-size: 1.8rem;
             text-align: center;
-            word-wrap: break-word;
+            word-wrap: break-word; */
+            background: var(--container-bg);
+    backdrop-filter: blur(10px);
+    color: var(--text-color);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    z-index: 10;
         }
 
         .messages {
